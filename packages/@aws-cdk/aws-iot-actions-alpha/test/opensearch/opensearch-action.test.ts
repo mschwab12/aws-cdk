@@ -34,7 +34,7 @@ test('Default opensearch action', () => {
     TopicRulePayload: {
       Actions: [
         {
-          openSearch: {
+          OpenSearch: {
             RoleArn: {
               'Fn::GetAtt': [IAM_ROLE_ID, 'Arn'],
             },
