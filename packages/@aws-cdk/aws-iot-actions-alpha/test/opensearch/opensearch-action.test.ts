@@ -1,10 +1,12 @@
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import * as iot from '@aws-cdk/aws-iot-alpha';
 import * as oss from 'aws-cdk-lib/aws-opensearchservice';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
 import * as actions from '../../lib';
 
 const IAM_ROLE_ID = 'MyTopicRuleTopicRuleActionRoleCE2D05DA';
+const ROLE_ARN = 'arn:aws:iam::123456789012:role/testrole';
 const ID = '1234';
 const TYPE = 'myType';
 const INDEX = 'myIndex';
@@ -34,7 +36,7 @@ test('Default opensearch action', () => {
     TopicRulePayload: {
       Actions: [
         {
-          OpenSearch: {
+          openSearch: {
             RoleArn: {
               'Fn::GetAtt': [IAM_ROLE_ID, 'Arn'],
             },
@@ -50,6 +52,40 @@ test('Default opensearch action', () => {
 
           },
         },
+      ],
+    },
+  });
+});
+
+test('Set role manually', () => {
+  // GIVEN
+  const stack = new cdk.Stack();
+  const topicRule = new iot.TopicRule(stack, 'MyTopicRule', {
+    sql: iot.IotSql.fromStringAsVer20160323(
+      "SELECT topic(2) as device_id FROM 'device/+/data'",
+    ),
+  });
+  const ossDomain = new oss.Domain(stack, 'mydomain', {
+    version: oss.EngineVersion.OPENSEARCH_1_3,
+  });
+  const role = iam.Role.fromRoleArn(stack, 'TestRole', ROLE_ARN);
+
+  // WHEN
+  topicRule.addAction(new actions.OpensearchAction(
+    ossDomain,
+    ID,
+    INDEX,
+    TYPE,
+    { role },
+  ));
+
+  // THEN
+  Template.fromStack(stack).hasResourceProperties('AWS::IoT::TopicRule', {
+    TopicRulePayload: {
+      Actions: [
+        Match.objectLike(
+          { opensearch: { RoleArn: ROLE_ARN } },
+        ),
       ],
     },
   });
