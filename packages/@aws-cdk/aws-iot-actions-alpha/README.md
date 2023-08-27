@@ -34,6 +34,7 @@ Currently supported are:
 - Write messages into columns of DynamoDB
 - Put messages IoT Events input
 - Send messages to HTTPS endpoints
+- Send messages to an Opensearch Service domain
 
 ## Republish a message to another MQTT topic
 
@@ -370,5 +371,29 @@ const topicRule = new iot.TopicRule(this, 'TopicRule', {
       auth: { serviceName: 'serviceName', signingRegion: 'us-east-1' },
     }),
   );
-}
+```
+
+## Send messages to an Opensearch Service domain
+
+The code snippet below creates an AWS IoT Rule that sends messages
+to an Opensearch Service domain when it is triggered:
+
+```ts
+const ossDomain = new oss.Domain(stack, 'mydomain', {
+  version: oss.EngineVersion.OPENSEARCH_1_3,
+});
+
+const topicRule = new iot.TopicRule(this, 'TopicRule', {
+  sql: iot.IotSql.fromStringAsVer20160323(
+    "SELECT topic(2) as device_id, year, month, day FROM 'device/+/data'",
+  ),
+  actions: [
+    new actions.OpensearchAction(
+      ossDomain,
+      '${newuuid()}',
+      'my-index',
+      'my-type',
+    ),
+  ],
+});
 ```

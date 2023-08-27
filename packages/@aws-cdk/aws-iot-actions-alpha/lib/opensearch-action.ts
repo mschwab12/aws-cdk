@@ -46,11 +46,17 @@ export class OpensearchAction implements iot.IAction {
    */
   _bind(topicRule: iot.ITopicRule): iot.ActionConfig {
     const role = this.role ?? singletonActionRole(topicRule);
+    role.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        actions: ['es:ESHttpPut'],
+        resources: [this.domain.domainArn],
+      }),
+    );
 
     return {
       configuration: {
         openSearch: {
-          endpoint: this.domain.domainEndpoint,
+          endpoint: `https://${this.domain.domainEndpoint}`,
           index: this.index,
           type: this.type,
           id: this.id,

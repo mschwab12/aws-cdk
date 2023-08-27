@@ -7,9 +7,9 @@ import * as actions from '../../lib';
 
 const IAM_ROLE_ID = 'MyTopicRuleTopicRuleActionRoleCE2D05DA';
 const ROLE_ARN = 'arn:aws:iam::123456789012:role/testrole';
-const ID = '1234';
-const TYPE = 'myType';
-const INDEX = 'myIndex';
+const ID = '75349a61-ad3e-487f-85c4-7846821c68cb';
+const TYPE = 'my-type';
+const INDEX = 'my-index';
 
 test('Default opensearch action', () => {
   // GIVEN
@@ -36,14 +36,22 @@ test('Default opensearch action', () => {
     TopicRulePayload: {
       Actions: [
         {
-          openSearch: {
+          OpenSearch: {
             RoleArn: {
               'Fn::GetAtt': [IAM_ROLE_ID, 'Arn'],
             },
             Endpoint: {
-              'Fn::GetAtt': [
-                Match.stringLikeRegexp('mydomain'),
-                'DomainEndpoint',
+              'Fn::Join': [
+                '',
+                [
+                  'https://',
+                  {
+                    'Fn::GetAtt': [
+                      Match.stringLikeRegexp('mydomain'),
+                      'DomainEndpoint',
+                    ],
+                  },
+                ],
               ],
             },
             Id: Match.exact(ID),
@@ -57,7 +65,7 @@ test('Default opensearch action', () => {
   });
 });
 
-test('Set role manually', () => {
+test('can set role', () => {
   // GIVEN
   const stack = new cdk.Stack();
   const topicRule = new iot.TopicRule(stack, 'MyTopicRule', {
@@ -84,7 +92,7 @@ test('Set role manually', () => {
     TopicRulePayload: {
       Actions: [
         Match.objectLike(
-          { opensearch: { RoleArn: ROLE_ARN } },
+          { OpenSearch: { RoleArn: ROLE_ARN } },
         ),
       ],
     },
